@@ -27,33 +27,38 @@ const describeUpdate = (update: PermissionUpdate) => {
   return `${update.type} ${where}`
 }
 
-const detailLines = (toolName: string, input: Record<string, unknown>) => {
-  if (toolName === "Bash") return [`$ ${stringField(input, "command") ?? ""}`, stringField(input, "description") ?? ""]
-  if (toolName === "Edit")
-    return [
-      ...(stringField(input, "old_string") ?? "").split("\n").map((line) => `- ${line}`),
-      ...(stringField(input, "new_string") ?? "").split("\n").map((line) => `+ ${line}`),
-    ]
-  if (toolName === "Write") return (stringField(input, "content") ?? "").split("\n").map((line) => `+ ${line}`)
-  return JSON.stringify(input, null, 2).split("\n")
-}
+type DetailLine = { text: string; color: string }
 
 const DETAIL_WIDTH = 76
 const MAX_DETAIL_LINES = 14
 
-const wrapLines = (lines: string[]) =>
-  lines
-    .flatMap((text) => text.split("\n"))
-    .flatMap((line) => {
-      if (line.length <= DETAIL_WIDTH) return [line]
-      const chunks: string[] = []
-      for (let start = 0; start < line.length; start += DETAIL_WIDTH)
-        chunks.push(line.slice(start, start + DETAIL_WIDTH))
-      return chunks
-    })
+const bodyLines = (text: string) => (text ? text.replace(/\n$/, "").split("\n") : [])
 
-const lineColor = (line: string) =>
-  line.startsWith("+ ") ? xp.diffAddInk : line.startsWith("- ") ? xp.diffDelInk : xp.ink
+const prefixed = (text: string, prefix: string, color: string): DetailLine[] =>
+  bodyLines(text).map((line) => ({ text: `${prefix}${line}`, color }))
+
+const detailLines = (toolName: string, input: Record<string, unknown>): DetailLine[] => {
+  if (toolName === "Bash")
+    return [
+      ...prefixed(stringField(input, "command") ?? "", "$ ", xp.ink),
+      ...prefixed(stringField(input, "description") ?? "", "# ", xp.muted),
+    ]
+  if (toolName === "Edit")
+    return [
+      ...prefixed(stringField(input, "old_string") ?? "", "- ", xp.diffDelInk),
+      ...prefixed(stringField(input, "new_string") ?? "", "+ ", xp.diffAddInk),
+    ]
+  if (toolName === "Write") return prefixed(stringField(input, "content") ?? "", "+ ", xp.diffAddInk)
+  return prefixed(JSON.stringify(input, null, 2), "", xp.ink)
+}
+
+const wrapLines = (lines: DetailLine[]): DetailLine[] =>
+  lines.flatMap(({ text, color }) => {
+    const chunks: DetailLine[] = [{ text: text.slice(0, DETAIL_WIDTH), color }]
+    for (let start = DETAIL_WIDTH; start < text.length; start += DETAIL_WIDTH - 2)
+      chunks.push({ text: `  ${text.slice(start, start + DETAIL_WIDTH - 2)}`, color })
+    return chunks
+  })
 
 export function PermissionDialog({
   request,
@@ -100,10 +105,12 @@ export function PermissionDialog({
       return false
     },
   })
-  const allDetails = wrapLines(detailLines(request.toolName, request.input).filter((line) => line !== ""))
+  const allDetails = wrapLines(detailLines(request.toolName, request.input))
   const hiddenCount = Math.max(0, allDetails.length - MAX_DETAIL_LINES)
   const details =
-    hiddenCount > 0 ? [...allDetails.slice(0, MAX_DETAIL_LINES - 1), `... ${hiddenCount + 1} more lines`] : allDetails
+    hiddenCount > 0
+      ? [...allDetails.slice(0, MAX_DETAIL_LINES - 1), { text: `... ${hiddenCount + 1} more lines`, color: xp.muted }]
+      : allDetails
   return (
     <Dialog
       title="Claude Code - Security Warning"
@@ -128,8 +135,8 @@ export function PermissionDialog({
       </box>
       <Sunken>
         {details.map((line, index) => (
-          <text key={index} bg={xp.white} fg={lineColor(line)} wrapMode="none">
-            {line}
+          <text key={index} bg={xp.white} fg={line.color} wrapMode="none">
+            {line.text}
           </text>
         ))}
       </Sunken>
