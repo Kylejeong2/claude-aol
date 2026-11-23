@@ -64,18 +64,20 @@ function useSession(session: AgentSession): SessionSnapshot {
 
 export function App({
   cwd,
+  model,
   screenName,
   onSession,
   onExit,
 }: {
   cwd: string
+  model: string | undefined
   screenName: string
   onSession: (session: AgentSession) => void
   onExit: () => void
 }) {
   const { width, height } = useTerminalDimensions()
   const [session, setSession] = useState(() => {
-    const first = new AgentSession({ cwd })
+    const first = new AgentSession({ cwd, model })
     onSession(first)
     return first
   })

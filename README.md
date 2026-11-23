@@ -14,7 +14,7 @@ cd /path/to/your/repo
 bun ~/projects/claude-aol/src/index.tsx
 ```
 
-The agent works in the directory you launch from.
+The agent works in the directory you launch from. Pass `--model <name>` (for example `--model haiku`) to start with a specific model.
 
 ## Tour
 

@@ -8,6 +8,8 @@ import { log, logPath } from "./log.ts"
 import { createLightSyntax, SyntaxContext } from "./ui/syntax.ts"
 
 const cwd = process.cwd()
+const modelFlag = process.argv.indexOf("--model")
+const model = modelFlag === -1 ? undefined : process.argv[modelFlag + 1]
 const screenName = process.env.AIM_SCREEN_NAME ?? userInfo().username
 
 const renderer = await createCliRenderer({
@@ -42,6 +44,7 @@ createRoot(renderer).render(
   <SyntaxContext.Provider value={createLightSyntax(renderer)}>
     <App
       cwd={cwd}
+      model={model}
       screenName={screenName}
       onSession={(session) => {
         activeSession = session
