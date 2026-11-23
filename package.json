@@ -1,0 +1,29 @@
+{
+  "name": "claude-aol",
+  "version": "0.1.0",
+  "description": "Claude Code in an AIM / Windows XP costume, built on OpenTUI",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "claude-aol": "./src/index.tsx"
+  },
+  "scripts": {
+    "start": "bun src/index.tsx",
+    "dev": "bun --watch src/index.tsx",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write src"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.3.330",
+    "@opentui/core": "^0.9.7",
+    "@opentui/react": "^0.9.7",
+    "react": "^19.3.1"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/react": "^19.3.0",
+    "prettier": "^3.6.0",
+    "typescript": "^5.9.0"
+  },
+  "packageManager": "pnpm@10.18.0"
+}
